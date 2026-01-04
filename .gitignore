@@ -1,0 +1,26 @@
+# PyInstaller関連
+build/
+dist/
+*.spec
+
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# データファイル
+progress_data.csv
+
+# IDE関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS関連
+.DS_Store
+Thumbs.db
+
