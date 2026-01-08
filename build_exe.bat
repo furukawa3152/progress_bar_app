@@ -17,7 +17,7 @@ echo EXEファイルを作成中...
 echo.
 
 REM PyInstallerでEXE化
-pyinstaller --onefile --windowed --name "プログレス管理アプリ" --icon=NONE progress_manager.py
+pyinstaller --onefile --windowed --name "業務進捗管理アプリ" --icon=NONE progress_manager.py
 
 echo.
 echo ========================================
@@ -25,4 +25,5 @@ echo EXE化が完了しました！
 echo 実行ファイルは dist フォルダ内にあります。
 echo ========================================
 pause
+
 
