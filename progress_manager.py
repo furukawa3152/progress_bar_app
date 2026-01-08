@@ -14,7 +14,7 @@ class ProgressRow:
         
         # 行のフレーム
         self.frame = ttk.Frame(parent, padding="5")
-        self.frame.grid(row=row_number, column=0, sticky=(tk.W, tk.E), pady=5)
+        self.frame.grid(row=row_number, column=0, sticky=(tk.W, tk.E), pady=0)
         
         # 項目名入力
         ttk.Label(self.frame, text="項目名:", width=8).grid(row=0, column=0, padx=5)
@@ -56,7 +56,7 @@ class ProgressRow:
                                 sticky=(tk.W, tk.E), pady=5)
         
         # キャンバスでプログレスバーを描画
-        self.canvas = tk.Canvas(self.progress_frame, height=30, bg='white', 
+        self.canvas = tk.Canvas(self.progress_frame, height=20, bg='white', 
                                relief='sunken', bd=2)
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
@@ -64,6 +64,28 @@ class ProgressRow:
         self.percent_label = ttk.Label(self.progress_frame, text="0.0%", 
                                       font=('Arial', 10, 'bold'))
         self.percent_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
+        # コメント欄
+        comment_label_frame = ttk.Frame(self.frame)
+        comment_label_frame.grid(row=2, column=0, columnspan=9, 
+                                sticky=(tk.W, tk.E), pady=(3, 5))
+        
+        ttk.Label(comment_label_frame, text="コメント:", width=8).grid(row=0, column=0, padx=5, sticky=tk.W)
+        
+        # コメント入力用のTextウィジェット
+        comment_frame = ttk.Frame(comment_label_frame)
+        comment_frame.grid(row=0, column=1, columnspan=8, sticky=(tk.W, tk.E), padx=5)
+        comment_frame.columnconfigure(0, weight=1)
+        
+        self.comment_text = tk.Text(comment_frame, height=1, width=50, wrap=tk.WORD)
+        self.comment_text.grid(row=0, column=0, sticky=(tk.W, tk.E))
+        
+        # コメント変更時の自動保存
+        self.comment_text.bind('<KeyRelease>', self.on_comment_changed)
+        
+        # フレームの列の重み設定
+        self.frame.columnconfigure(1, weight=1)
+        comment_label_frame.columnconfigure(1, weight=1)
         
         self.update_progress()
     
@@ -105,6 +127,13 @@ class ProgressRow:
         """値が変更されたときの処理（親に通知）"""
         if hasattr(self, 'parent_app') and self.parent_app:
             self.parent_app.save_to_csv()
+            self.parent_app.update_summary()
+    
+    def on_comment_changed(self, event=None):
+        """コメントが変更されたときの処理"""
+        if hasattr(self, 'parent_app') and self.parent_app:
+            self.parent_app.save_to_csv()
+            self.parent_app.update_summary()
     
     def get_data(self):
         """この行のデータを取得"""
@@ -112,10 +141,11 @@ class ProgressRow:
             'row_number': self.row_number,
             'item_name': self.name_entry.get(),
             'max_value': self.get_max_value(),
-            'current_value': self.current_value
+            'current_value': self.current_value,
+            'comment': self.comment_text.get("1.0", tk.END).strip()
         }
     
-    def set_data(self, item_name, max_value, current_value):
+    def set_data(self, item_name, max_value, current_value, comment=""):
         """この行にデータを設定"""
         self.name_entry.delete(0, tk.END)
         self.name_entry.insert(0, item_name)
@@ -124,6 +154,10 @@ class ProgressRow:
         self.max_entry.insert(0, str(max_value))
         
         self.current_value = current_value
+        
+        self.comment_text.delete("1.0", tk.END)
+        self.comment_text.insert("1.0", comment)
+        
         self.update_progress()
     
     def update_progress(self):
@@ -185,8 +219,8 @@ class ProgressManagerApp:
     
     def __init__(self, root):
         self.root = root
-        self.root.title("プログレス管理")
-        self.root.geometry("600x600")
+        self.root.title("業務進捗管理")
+        self.root.geometry("600x755")
         self.csv_filename = "progress_data.csv"
         
         # スタイル設定
@@ -198,21 +232,38 @@ class ProgressManagerApp:
         main_frame = ttk.Frame(root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # タイトル
-        title_label = ttk.Label(main_frame, text="プログレス管理", 
-                               font=('Arial', 16, 'bold'))
-        title_label.grid(row=0, column=0, pady=10)
+        # タイトル行フレーム
+        title_frame = ttk.Frame(main_frame)
+        title_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=10)
         
-        # 5行のプログレス行を作成
+        # タイトル
+        title_label = ttk.Label(title_frame, text="業務進捗管理", 
+                               font=('Arial', 16, 'bold'))
+        title_label.grid(row=0, column=0, sticky=tk.W)
+        
+        # 右上の小窓（コピペ用表示）
+        summary_frame = ttk.LabelFrame(title_frame, text="入力済み項目", padding="3")
+        summary_frame.grid(row=0, column=1, sticky=(tk.N, tk.E), padx=(20, 0))
+        
+        # コピペ可能なテキストフィールド（小さく）
+        self.summary_text = tk.Text(summary_frame, width=25, height=4, 
+                                   wrap=tk.WORD, font=('Arial', 8))
+        self.summary_text.pack(fill=tk.BOTH, expand=True)
+        
+        # タイトル行の列の重み設定
+        title_frame.columnconfigure(0, weight=1)
+        title_frame.columnconfigure(1, weight=0)
+        
+        # 6行のプログレス行を作成
         self.progress_rows = []
-        for i in range(5):
+        for i in range(6):
             row = ProgressRow(main_frame, i + 1)
             row.parent_app = self  # 親アプリへの参照を設定
             self.progress_rows.append(row)
         
         # 全体リセットボタン
         button_frame = ttk.Frame(main_frame, padding="10")
-        button_frame.grid(row=7, column=0, pady=10)
+        button_frame.grid(row=7, column=0, pady=(0, 10))
         
         reset_all_btn = ttk.Button(button_frame, text="全てリセット", 
                                    command=self.reset_all, 
@@ -236,6 +287,9 @@ class ProgressManagerApp:
         
         # CSVファイルから前回のデータを読み込み
         self.load_from_csv()
+        
+        # サマリー表示を初期化
+        self.update_summary()
     
     def reset_all(self):
         """全ての行をリセット"""
@@ -257,7 +311,7 @@ class ProgressManagerApp:
         try:
             with open(self.csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(['row_number', 'item_name', 'max_value', 'current_value'])
+                writer.writerow(['row_number', 'item_name', 'max_value', 'current_value', 'comment'])
                 
                 for row in self.progress_rows:
                     data = row.get_data()
@@ -265,7 +319,8 @@ class ProgressManagerApp:
                         data['row_number'],
                         data['item_name'],
                         data['max_value'],
-                        data['current_value']
+                        data['current_value'],
+                        data['comment']
                     ])
         except Exception as e:
             print(f"CSV保存エラー: {e}")
@@ -283,14 +338,37 @@ class ProgressManagerApp:
                     row_number = int(row_data['row_number'])
                     if 1 <= row_number <= len(self.progress_rows):
                         idx = row_number - 1
+                        # コメント欄が存在しない古いCSVファイルに対応
+                        comment = row_data.get('comment', '')
                         self.progress_rows[idx].set_data(
                             row_data['item_name'],
                             int(row_data['max_value']),
-                            int(row_data['current_value'])
+                            int(row_data['current_value']),
+                            comment
                         )
             print(f"前回のデータを読み込みました: {self.csv_filename}")
         except Exception as e:
             print(f"CSV読み込みエラー: {e}")
+    
+    def update_summary(self):
+        """入力済み項目のサマリーを更新"""
+        lines = []
+        for row in self.progress_rows:
+            data = row.get_data()
+            # 現在値が0より大きい、またはコメントがある行のみ表示
+            if data['current_value'] > 0 or data['comment'].strip():
+                item_name = data['item_name']
+                count = data['current_value']
+                comment = data['comment'].strip()
+                if comment:
+                    lines.append(f"{item_name}：{count}　{comment}")
+                else:
+                    lines.append(f"{item_name}：{count}")
+        
+        # テキストフィールドを更新
+        self.summary_text.delete("1.0", tk.END)
+        if lines:
+            self.summary_text.insert("1.0", "\n".join(lines))
     
     def on_closing(self):
         """ウィンドウを閉じる際の処理"""
