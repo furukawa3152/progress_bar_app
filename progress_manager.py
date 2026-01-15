@@ -10,49 +10,54 @@ class ProgressRow:
     def __init__(self, parent, row_number):
         self.row_number = row_number
         self.current_value = 0
-        self.max_value = 100
+        self.max_value = 10
         
         # 行のフレーム
         self.frame = ttk.Frame(parent, padding="5")
         self.frame.grid(row=row_number, column=0, sticky=(tk.W, tk.E), pady=0)
         
-        # 項目名入力
-        ttk.Label(self.frame, text="項目名:", width=8).grid(row=0, column=0, padx=5)
-        self.name_entry = ttk.Entry(self.frame, width=15)
+        # 業務内容入力
+        ttk.Label(self.frame, text="業務内容:", width=8).grid(row=0, column=0, padx=(5, 2))
+        self.name_entry = ttk.Entry(self.frame, width=35, font=('Arial', 10))
         self.name_entry.insert(0, f"項目 {row_number}")
-        self.name_entry.grid(row=0, column=1, padx=5)
+        self.name_entry.grid(row=0, column=1, padx=(2, 2))
         
-        # マックス値入力
-        ttk.Label(self.frame, text="最大値:", width=8).grid(row=0, column=2, padx=5)
-        self.max_entry = ttk.Entry(self.frame, width=10)
-        self.max_entry.insert(0, "100")
+        # 件数入力
+        ttk.Label(self.frame, text="件数:", width=8).grid(row=0, column=2, padx=(2, 2))
+        self.max_entry = ttk.Entry(self.frame, width=5)
+        self.max_entry.insert(0, "10")
         self.max_entry.bind('<KeyRelease>', self.on_max_changed)
-        self.max_entry.grid(row=0, column=3, padx=5)
+        self.max_entry.grid(row=0, column=3, padx=(2, 2))
         
         # 現在値表示
-        ttk.Label(self.frame, text="現在値:", width=8).grid(row=0, column=4, padx=5)
+        ttk.Label(self.frame, text="現在値:", width=8).grid(row=0, column=4, padx=(2, 2))
         self.current_label = ttk.Label(self.frame, text="0", width=10, 
                                        style='Current.TLabel')
-        self.current_label.grid(row=0, column=5, padx=5)
+        self.current_label.grid(row=0, column=5, padx=(2, 2))
         
         # ＋ボタン
         self.plus_btn = ttk.Button(self.frame, text="＋", width=3, 
                                    command=self.increment)
-        self.plus_btn.grid(row=0, column=6, padx=2)
+        self.plus_btn.grid(row=0, column=6, padx=1)
         
         # －ボタン
         self.minus_btn = ttk.Button(self.frame, text="－", width=3, 
                                     command=self.decrement)
-        self.minus_btn.grid(row=0, column=7, padx=2)
+        self.minus_btn.grid(row=0, column=7, padx=1)
+        
+        # 完了ボタン
+        self.complete_btn = ttk.Button(self.frame, text="完了", width=6, 
+                                       command=self.complete)
+        self.complete_btn.grid(row=0, column=8, padx=1)
         
         # リセットボタン
         self.reset_btn = ttk.Button(self.frame, text="リセット", width=8, 
                                     command=self.reset)
-        self.reset_btn.grid(row=0, column=8, padx=5)
+        self.reset_btn.grid(row=0, column=9, padx=(1, 5))
         
         # プログレスバー
         self.progress_frame = ttk.Frame(self.frame)
-        self.progress_frame.grid(row=1, column=0, columnspan=9, 
+        self.progress_frame.grid(row=1, column=0, columnspan=10, 
                                 sticky=(tk.W, tk.E), pady=5)
         
         # キャンバスでプログレスバーを描画
@@ -67,7 +72,7 @@ class ProgressRow:
         
         # コメント欄
         comment_label_frame = ttk.Frame(self.frame)
-        comment_label_frame.grid(row=2, column=0, columnspan=9, 
+        comment_label_frame.grid(row=2, column=0, columnspan=10, 
                                 sticky=(tk.W, tk.E), pady=(3, 5))
         
         ttk.Label(comment_label_frame, text="コメント:", width=8).grid(row=0, column=0, padx=5, sticky=tk.W)
@@ -95,7 +100,7 @@ class ProgressRow:
             value = int(self.max_entry.get())
             return max(1, value)  # 最小値は1
         except ValueError:
-            return 100
+            return 10
     
     def on_max_changed(self, event=None):
         """マックス値が変更されたときの処理"""
@@ -117,9 +122,30 @@ class ProgressRow:
             self.update_progress()
             self.on_value_changed()
     
+    def complete(self):
+        """現在値を件数の最大値に設定（100%にする）"""
+        max_val = self.get_max_value()
+        self.current_value = max_val
+        self.update_progress()
+        self.on_value_changed()
+    
     def reset(self):
-        """現在値をリセット"""
+        """業務内容、件数、現在値、コメントをリセット"""
+        # 業務内容をデフォルト値にリセット
+        self.name_entry.delete(0, tk.END)
+        self.name_entry.insert(0, f"項目 {self.row_number}")
+        
+        # 件数を10にリセット
+        self.max_entry.delete(0, tk.END)
+        self.max_entry.insert(0, "10")
+        self.max_value = 10
+        
+        # 現在値を0にリセット
         self.current_value = 0
+        
+        # コメントをクリア
+        self.comment_text.delete("1.0", tk.END)
+        
         self.update_progress()
         self.on_value_changed()
     
