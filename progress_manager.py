@@ -17,23 +17,23 @@ class ProgressRow:
         self.frame.grid(row=row_number, column=0, sticky=(tk.W, tk.E), pady=0)
         
         # 業務内容入力
-        ttk.Label(self.frame, text="業務内容:", width=8).grid(row=0, column=0, padx=(5, 2))
-        self.name_entry = ttk.Entry(self.frame, width=35, font=('Arial', 10))
+        ttk.Label(self.frame, text="業務内容:", width=8).grid(row=0, column=0, padx=(5, 1))
+        self.name_entry = ttk.Entry(self.frame, width=50, font=('Arial', 10))
         self.name_entry.insert(0, f"項目 {row_number}")
-        self.name_entry.grid(row=0, column=1, padx=(2, 2))
+        self.name_entry.grid(row=0, column=1, padx=(1, 1))
         
         # 件数入力
-        ttk.Label(self.frame, text="件数:", width=8).grid(row=0, column=2, padx=(2, 2))
+        ttk.Label(self.frame, text="件数:", width=8).grid(row=0, column=2, padx=(1, 1))
         self.max_entry = ttk.Entry(self.frame, width=5)
         self.max_entry.insert(0, "10")
         self.max_entry.bind('<KeyRelease>', self.on_max_changed)
-        self.max_entry.grid(row=0, column=3, padx=(2, 2))
+        self.max_entry.grid(row=0, column=3, padx=(1, 1))
         
         # 現在値表示
-        ttk.Label(self.frame, text="現在値:", width=8).grid(row=0, column=4, padx=(2, 2))
+        ttk.Label(self.frame, text="現在値:", width=8).grid(row=0, column=4, padx=(1, 1))
         self.current_label = ttk.Label(self.frame, text="0", width=10, 
                                        style='Current.TLabel')
-        self.current_label.grid(row=0, column=5, padx=(2, 2))
+        self.current_label.grid(row=0, column=5, padx=(1, 1))
         
         # ＋ボタン
         self.plus_btn = ttk.Button(self.frame, text="＋", width=3, 
